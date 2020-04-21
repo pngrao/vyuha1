@@ -1,19 +1,22 @@
-#include<iostream>
-#include<cstdlib>
+//#include<iostream>
+//#include<cstdlib>
 #include<SFML/Graphics.hpp>
-#include<SFML/Window.hpp>
+//#include<SFML/Window.hpp>
 
 using namespace std;
 using namespace sf;
 
 const unsigned int v1MaxSqPerSide = 5;
 
+//To be used when setting states
+/*
 enum HouseFeature {
 	Regular,
 	Home,
 	SafeHouse,
 	Palace
 }feature;
+*/
 
 class Border : public sf::RectangleShape {
 	float x, y;
@@ -23,10 +26,10 @@ public:
 	{
 		x = a;
 		y = b;
-		cout << "1. House plot allotted! Now, building...\n";
+		//cout << "1. House plot allotted! Now, building...\n";
 	}
-	Border() { cout << "2. House plot allotted! Now, building...\n"; }
-	~Border() { cout << "House uninitialized!\n"; }
+	Border() { /*cout << "2. House plot allotted! Now, building...\n"; */ }
+	~Border() { /*cout << "House uninitialized!\n"; */ }
 
 	sf::RectangleShape fence;
 	void BuildFence()
