@@ -6,7 +6,7 @@
 using namespace std;
 using namespace sf;
 
-const unsigned int v1MaxSqPerSide = 5;
+//const unsigned int v1MaxSqPerSide = 5;
 
 //To be used when setting states
 /*
@@ -26,10 +26,9 @@ public:
 	{
 		x = a;
 		y = b;
-		//cout << "1. House plot allotted! Now, building...\n";
 	}
-	Border() { /*cout << "2. House plot allotted! Now, building...\n"; */ }
-	~Border() { /*cout << "House uninitialized!\n"; */ }
+	Border() {}
+	~Border() {}
 
 	sf::RectangleShape fence;
 	void BuildFence()
@@ -45,15 +44,20 @@ public:
 int main()
 {
 	//Window creation
-	unsigned int xWin = 800, yWin = 600; //540,540
+	unsigned int xWin = 800, yWin = 600;
 	int v1SquareSize = 5;
 	float playerPositionInitX = (xWin / 2);
 	float playerPositionInitY = yWin - (yWin / v1SquareSize);
-	sf::RenderWindow window(sf::VideoMode(xWin,yWin), "Welcome to Vyuha 1");
+	sf::RenderWindow window(sf::VideoMode(xWin,yWin), "Vyuha, Chapter 1");
 	
 	//Texture and Sprite creation
+	//sf::Texture terrainTexture;
 	sf::Texture playerTexture;
-	playerTexture.loadFromFile("p1.png");
+
+	//terrainTexture.loadFromFile("cave1.jpg");
+	//sf::Sprite background(terrainTexture);
+
+	playerTexture.loadFromFile("piratefront.png");
 	sf::Sprite player;
 	player.setTexture(playerTexture);
 	player.setPosition(playerPositionInitX, playerPositionInitY);
@@ -80,29 +84,43 @@ int main()
 			if (event.type == sf::Event::Closed) window.close();
 			if (event.type == sf::Event::KeyPressed)
 			{
-				if (event.key.code == sf::Keyboard::Up) player.move(0, moveUnitMin);
-				if (event.key.code == sf::Keyboard::Right) player.move(moveUnitMax, 0);
-				if (event.key.code == sf::Keyboard::Down) player.move(0, moveUnitMax);
-				if (event.key.code == sf::Keyboard::Left) player.move(moveUnitMin, 0);
-
+				if (event.key.code == sf::Keyboard::Up)
+				{
+					player.move(0, moveUnitMin);
+					playerTexture.loadFromFile("pirateback.png");
+				}
+				if (event.key.code == sf::Keyboard::Right)
+				{
+					player.move(moveUnitMax, 0);
+					playerTexture.loadFromFile("pirateright.png");
+				}
+				if (event.key.code == sf::Keyboard::Down)
+				{
+					player.move(0, moveUnitMax);
+					playerTexture.loadFromFile("piratefront.png");
+				}
+				if (event.key.code == sf::Keyboard::Left)
+				{
+					player.move(moveUnitMin, 0);
+					playerTexture.loadFromFile("pirateleft.png");
+				}
 			}
 		}
 		window.clear(sf::Color::White);
 		window.draw(b1.fence);
 
 		// adapt sprite position to be within window boundary
-		//sf::FloatRect windowBounds(sf::Vector2f(0.f, 0.f), window.getDefaultView().getSize());
 		sf::Vector2f position = player.getPosition();
-		position.x = std::max(position.x, windowBounds.left+20);
-		position.y = std::max(position.y, windowBounds.left+20);
+		//Freeze left and top walls
+		position.x = std::max(position.x, windowBounds.left+10);
+		position.y = std::max(position.y, windowBounds.top+10);
 		player.setPosition(position);
-		//FIX this code
-		//position.x = std::min(position.x, windowBounds.left + windowBounds.width - window.getSize().x);
-		//position.x = std::min(position.x, windowBounds.left + windowBounds.width - window.getSize().x);
-		position.x = std::min(position.x, 730.f);
-		position.y = std::min(position.y, 480.f);
+		//Freeze right and bottom walls
+		position.x = std::min(position.x, windowBounds.left + windowBounds.width - (playerTexture.getSize().x+10));
+		position.y = std::min(position.y, windowBounds.top + windowBounds.height - (playerTexture.getSize().y+10));
 		player.setPosition(position);
 
+		//window.draw(background);
 		window.draw(player);
 		window.display();
 	}
