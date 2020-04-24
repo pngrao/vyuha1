@@ -3,7 +3,7 @@ using namespace std;
 using namespace sf;
 
 //Window size
-unsigned int xWin = 1280, yWin = 600;
+unsigned int xWin = 1000, yWin = 600;
 unsigned int FRLimit = 60;
 string playerAnim = "pirate_sprite_sheet.png";
 string treasureAnim = "treasurefront.png";
@@ -12,8 +12,9 @@ class Character {
 public:
 	sf::Sprite sprite;
 	sf::Texture texture;
-	Character() {}
-	Character(sf::Texture& t, string filename, int x, int y, int w, int h)
+	int left, top, width, height;
+	Character():left(0), top(0), width(0), height(0) {}
+	Character(sf::Texture& t, string filename, int x=0, int y=0, int w=0, int h=0):left(x), top(y), width(w), height(h)
 	{
 		texture = t;
 		texture.loadFromFile(filename);
@@ -25,12 +26,26 @@ public:
 		sprite.setTexture(texture);
 		sprite.setTextureRect(IntRect(x, y, w, h));
 	}
+	void checkBoundaryCollision(sf::FloatRect bounds)
+	{
+		//Collision detection - Player vs Window boundary line(2D obj vs 1D obj)
+		//Adapt player position to be within window boundary
+		sf::Vector2f position = sprite.getPosition();
+		position.x = std::max(position.x, bounds.left);
+		position.y = std::max(position.y, bounds.top);
+		sprite.setPosition(position);
+		position.x = std::min(position.x, bounds.width - width);
+		position.y = std::min(position.y, bounds.height - height);
+		sprite.setPosition(position);
+	}
 };
 int main()
 {
 	//Window
 	sf::RenderWindow window(sf::VideoMode(xWin, yWin), "Vyuha-Level 1", sf::Style::Close);
 	window.setFramerateLimit(FRLimit);
+	//Get window boundary, getSize returns only float so convert the rest
+	sf::FloatRect windowBounds(sf::Vector2f(0.f, 0.f), window.getDefaultView().getSize());
 	//Texture & Sprite
 	sf::Texture pTexture, tTexture;
 	Character player(pTexture, playerAnim, 0, 0, 60, 89);
@@ -42,6 +57,7 @@ int main()
 	//Move
 	float moveUnitMin, moveUnitMax;
 	moveUnitMin = -8, moveUnitMax = 8;
+
 	//Game loop
 	while (window.isOpen())
 	{
@@ -91,6 +107,9 @@ int main()
 				}
 			}
 		}
+		//Collision detection
+		player.checkBoundaryCollision(windowBounds);
+		//Display all
 		window.clear(sf::Color::White);
 		window.draw(player.sprite);
 		window.draw(treasure.sprite);
