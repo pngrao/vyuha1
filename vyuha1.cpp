@@ -1,127 +1,99 @@
-//#include<iostream>
-//#include<cstdlib>
 #include<SFML/Graphics.hpp>
-//#include<SFML/Window.hpp>
-
 using namespace std;
 using namespace sf;
 
-//const unsigned int v1MaxSqPerSide = 5;
+//Window size
+unsigned int xWin = 1280, yWin = 600;
+unsigned int FRLimit = 60;
+string playerAnim = "pirate_sprite_sheet.png";
+string treasureAnim = "treasurefront.png";
 
-//To be used when setting states
-/*
-enum HouseFeature {
-	Regular,
-	Home,
-	SafeHouse,
-	Palace
-}feature;
-*/
-
-class Border : public sf::RectangleShape {
-	float x, y;
+class Character {
 public:
-	
-	Border(float a, float b)
+	sf::Sprite sprite;
+	sf::Texture texture;
+	Character() {}
+	Character(sf::Texture& t, string filename, int x, int y, int w, int h)
 	{
-		x = a;
-		y = b;
+		texture = t;
+		texture.loadFromFile(filename);
+		texture.setSmooth(true);
+		changePosture(x, y, w, h);
 	}
-	Border() {}
-	~Border() {}
-
-	sf::RectangleShape fence;
-	void BuildFence()
+	void changePosture(int x, int y, int w, int h)
 	{
-		fence.setSize(sf::Vector2f(x, y));
-		fence.setOutlineColor(sf::Color::Black);
-		fence.setOutlineThickness(1);
-		fence.setPosition(10,10);
+		sprite.setTexture(texture);
+		sprite.setTextureRect(IntRect(x, y, w, h));
 	}
-
 };
-
 int main()
 {
-	//Window creation
-	unsigned int xWin = 800, yWin = 600;
-	int v1SquareSize = 5;
-	float playerPositionInitX = (xWin / 2);
-	float playerPositionInitY = yWin - (yWin / v1SquareSize);
-	sf::RenderWindow window(sf::VideoMode(xWin,yWin), "Vyuha, Chapter 1");
-	
-	//Texture and Sprite creation
-	//sf::Texture terrainTexture;
-	sf::Texture playerTexture;
-
-	//terrainTexture.loadFromFile("cave1.jpg");
-	//sf::Sprite background(terrainTexture);
-
-	playerTexture.loadFromFile("piratefront.png");
-	sf::Sprite player;
-	player.setTexture(playerTexture);
-	player.setPosition(playerPositionInitX, playerPositionInitY);
-
+	//Window
+	sf::RenderWindow window(sf::VideoMode(xWin, yWin), "Vyuha-Level 1", sf::Style::Close);
+	window.setFramerateLimit(FRLimit);
+	//Texture & Sprite
+	sf::Texture pTexture, tTexture;
+	Character player(pTexture, playerAnim, 0, 0, 60, 89);
+	player.sprite.setPosition(float(xWin / 2 - 60 / 2), float(yWin - 89));
+	Character treasure(tTexture, treasureAnim, 0, 0, 198, 150);
+	treasure.sprite.setPosition(float(xWin / 2 -198/2), float(yWin / 2 - 150 / 2));
 	//Event
 	sf::Event event;
-
 	//Move
 	float moveUnitMin, moveUnitMax;
-	moveUnitMin = -24, moveUnitMax = 24;
-
-	//Border
-	unsigned int xBorder = xWin - 20, yBorder = yWin - 20;
-	Border b1(xBorder, yBorder);
-	b1.BuildFence();
-	
-	// adapt sprite position to be within window boundary
-	sf::FloatRect windowBounds(sf::Vector2f(0.f, 0.f), window.getDefaultView().getSize());
-
+	moveUnitMin = -8, moveUnitMax = 8;
+	//Game loop
 	while (window.isOpen())
 	{
 		while (window.pollEvent(event))
 		{
-			if (event.type == sf::Event::Closed) window.close();
+			if (event.type == sf::Event::Closed)
+				window.close();
 			if (event.type == sf::Event::KeyPressed)
 			{
-				if (event.key.code == sf::Keyboard::Up)
-				{
-					player.move(0, moveUnitMin);
-					playerTexture.loadFromFile("pirateback.png");
-				}
+				//Movement controls left, right, up and down arrow keys
 				if (event.key.code == sf::Keyboard::Right)
 				{
-					player.move(moveUnitMax, 0);
-					playerTexture.loadFromFile("pirateright.png");
-				}
-				if (event.key.code == sf::Keyboard::Down)
-				{
-					player.move(0, moveUnitMax);
-					playerTexture.loadFromFile("piratefront.png");
+					player.sprite.move(moveUnitMax, 0);
+					player.changePosture(60, 0, 60, 89);
 				}
 				if (event.key.code == sf::Keyboard::Left)
 				{
-					player.move(moveUnitMin, 0);
-					playerTexture.loadFromFile("pirateleft.png");
+					player.sprite.move(moveUnitMin, 0);
+					player.changePosture(120, 0, 60, 89);
+				}
+				if (event.key.code == sf::Keyboard::Up)
+				{
+					player.sprite.move(0, moveUnitMin);
+					player.changePosture(180, 0, 60, 89);
+				}
+				if (event.key.code == sf::Keyboard::Down)
+				{
+					player.sprite.move(0, moveUnitMax);
+					player.changePosture(0, 0, 60, 89);
+				}
+				//Weapon display controls A, D, W and S letter keys
+				if (event.key.code == sf::Keyboard::A)
+				{
+					player.changePosture(120, 90, 60, 89);
+				}
+				if (event.key.code == sf::Keyboard::D)
+				{
+					player.changePosture(60, 90, 60, 89);
+				}
+				if (event.key.code == sf::Keyboard::W)
+				{
+					player.changePosture(180, 90, 60, 89);
+				}
+				if (event.key.code == sf::Keyboard::S)
+				{
+					player.changePosture(0, 90, 60, 89);
 				}
 			}
 		}
 		window.clear(sf::Color::White);
-		window.draw(b1.fence);
-
-		// adapt sprite position to be within window boundary
-		sf::Vector2f position = player.getPosition();
-		//Freeze left and top walls
-		position.x = std::max(position.x, windowBounds.left+10);
-		position.y = std::max(position.y, windowBounds.top+10);
-		player.setPosition(position);
-		//Freeze right and bottom walls
-		position.x = std::min(position.x, windowBounds.left + windowBounds.width - (playerTexture.getSize().x+10));
-		position.y = std::min(position.y, windowBounds.top + windowBounds.height - (playerTexture.getSize().y+10));
-		player.setPosition(position);
-
-		//window.draw(background);
-		window.draw(player);
+		window.draw(player.sprite);
+		window.draw(treasure.sprite);
 		window.display();
 	}
 	return 0;
