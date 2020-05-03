@@ -19,4 +19,4 @@ Wall is a static element, that the player has to navigate through to reach the K
 ![](wall1.png)
 
 ## Game layout so far
-![](screenshot1.png)
+![](screenshot_may3.png)
