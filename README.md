@@ -1,6 +1,15 @@
 # Vyuha1
 2D game layout design using C++ and SFML 2.5.1
 
+## Features
+| Feature | Class usage |
+| --- | --- |
+| Window creation and settings | sf::RenderWindow |
+| Application icon | sf::Image and sf::RenderWindow |
+| Player, Key and Wall animation | sf::Texture, sf::Sprite and Character class |
+| Player movements | Character class member functions, sf::Sprite and sf::Event's KeyPressed event check |
+| Boundary collision detection | sf::Sprite's getPosition() and sf::RenderWindow's getGlobalBounds() |
+
 ## Sprite Creation
 I have used Windows 10 Paint 3D to create character animations for the game.
 
