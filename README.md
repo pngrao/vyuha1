@@ -3,7 +3,7 @@
 
 ## Features
 | Feature | Class usage |
-| --- | --- |
+| ----- | --- |
 | Window creation and settings | sf::RenderWindow |
 | Application icon | sf::Image and sf::RenderWindow |
 | Player, Key and Wall animation | sf::Texture, sf::Sprite and Character class |
