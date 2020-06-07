@@ -1,4 +1,5 @@
 #include<SFML/Graphics.hpp>
+#include<SFML/Audio.hpp>
 #include<iostream>
 #include<list>
 using namespace std;
@@ -7,10 +8,13 @@ using namespace sf;
 //Window size set using only modes supporting fullscreeen
 unsigned int xWin = 1280, yWin = 600;
 unsigned int FRLimit = 60;
-string playerAnim = "pirate_sprite_sheet.png";
-string wallAnim = "wall1.png";
-string keyAnim = "key.png";
-string iconImage = "pirateicon64.png";
+string playerAnim = "resources/images/pirate_motion.png";
+string wallAnim = "resources/images/wall.png";
+string keyAnim = "resources/images/gazebo_key.png";
+string iconImage = "resources/images/pirateicon64.png";
+string enemyAnim = "resources/images/cannonball.png";
+string fontFile = "resources/fonts/clarenbd.ttf";
+string bgmusicFile = "resources/music/bgmusic.ogg";
 
 class Character {
 public:
@@ -21,6 +25,11 @@ public:
 	string name;
 	bool notCollided = true;
 	int score = 0;
+	//cannonball, code to be moved to enemy class
+	int step=1;
+	float speed = 1.f;
+	int interval = 10;
+	int startFrame = 40;
 	Character():left(0), top(0), width(0), height(0), frameCount(1) {}
 	Character(Texture& t, string filename, string n, int x=0, int y=0, int w=0, int h=0, int f=1):left(x), top(y), width(w), height(h), frameCount(f)
 	{
@@ -30,6 +39,7 @@ public:
 		texture.setSmooth(true);
 		changePosture(x, y, w, h, f);
 	}
+	
 	//TODO overload changePosture to accept vector<vector<int>>
 	void changePosture(int x, int y, int w, int h, int f)
 	{
@@ -47,7 +57,6 @@ public:
 	{
 		//Collision detection - Player vs Window boundary line(2D obj vs 1D obj)
 		//Adapt player position to be within window boundary
-		//TODO change sprite dimension- right turn showing gap
 		Vector2f position = sprite.getPosition();
 		position.x = std::max(position.x, bounds.left);
 		position.y = std::max(position.y, bounds.top);
@@ -94,26 +103,36 @@ public:
 				aBounds.left < bBounds.left + bBounds.width &&
 				aBounds.left + aBounds.width > bBounds.left)
 			{
-				a->sprite.setPosition(aBounds.left, bBounds.top + aBounds.height);
+				a->sprite.setPosition(aBounds.left, bBounds.top + aBounds.height - 40.f);
 			}
-			if (b->name == "canonball")
+			if (b->name == "cannonball")
 			{
-				//if(b->notCollided)
-					//a->sprite.setPosition(0.f, float(yWin - 89));
-				//TODO: not working fix it
-				//a->changePosture(0, 0, 60, 89, 1);
-				
 				if (b->notCollided)
 				{
-					a->score -= 100;
-					cout << "Bammm!" << endl;
+					a->score -= 1000;
+					cout << "Oops!" << endl;
 				}
 				b->notCollided = false;
 			}
 		}
 	}
+	void movementSetting(float s, int i, int sf)
+	{
+		step = 1;
+		speed = s;
+		interval = i;
+		startFrame = sf;
+	}
 	//Add a method to change frames later
 };
+
+void setup_bgmusic(Music* music, string file)
+{
+	music->openFromFile(file);
+	music->setLoop(true);
+	music->setPitch(float(1.05));
+	music->setVolume(20);
+}
 
 int main()
 {
@@ -122,6 +141,7 @@ int main()
 	window.setFramerateLimit(FRLimit);
 	//Get window boundary, getSize returns only float so convert the rest
 	FloatRect windowBounds(Vector2f(0.f, 0.f), window.getDefaultView().getSize());
+
 	//Set Icon
 	Image icon;
 	icon.loadFromFile(iconImage);
@@ -130,58 +150,66 @@ int main()
 	//Texture & Sprite
 	Texture pTexture, wTexture, kTexture, cbTexture;
 
-	Character player(pTexture, playerAnim, "player", 0, 0, 60, 89);
-	player.sprite.setPosition(0.f, float(yWin - 89));
-	vector<vector<int>>playerPostures{ /*{60, 0, 60, 89, 1}, {120, 0, 60, 89, 1},\ */ //right and left changed
-									   {60, 0, 45, 89, 1}, {130, 0, 45, 89, 1},\
-									   {180, 0, 60, 89, 1}, {0, 0, 60, 89, 1},\
-									   {120, 90, 60, 89, 1}, {60, 90, 60, 89, 1},\
-									   {180, 90, 60, 89, 1}, { 0, 90, 60, 89, 1} };
-	int posture = 3;
+	Character player(pTexture, playerAnim, "player", 0, 0, 55, 90);
+	player.sprite.setPosition(0.f, float(yWin - 90));
+	vector<vector<int>>playerPostures{ {0, 0, 60, 90, 1}, {60, 0, 55, 90, 1}, {225, 0, 55, 90, 1} };
+	int posture = 0;
 
 	//Set Score
 	Font font;
-	font.loadFromFile("clarenbd.ttf");
-	string scoretext = "Score: ";
-	string scoreboard = scoretext+to_string(player.score);
-	Text Score(scoreboard, font, 25);
-	Score.setFillColor(Color::Black);
-	Score.setOutlineColor(Color::Yellow);
+	font.loadFromFile(fontFile);
+	string scoretext = "  SCORE: ";
+	string lifetext = "  LIFE: 1";
+	string scoreboard = lifetext + scoretext + to_string(player.score);
+	Text Score(scoreboard, font, 20);
+	Score.setFillColor(Color(200,90,90,255));
+	Score.setOutlineColor(Color::Black);
 	Score.setOutlineThickness(1.f);
+	Score.setLetterSpacing(1.f);
+	Score.setStyle(Text::Italic);
 
 	list<Character>walls;
-	/*wallCoverage matrix columns : width, height, xPos, level*/
-	vector<vector<float>>wallCoverage{ {616.f,85.f,0.f,1.f}, {616.f,85.f,700.f,1.f}, \
-									   {308.f,85.f,0.f,2.f}, {616.f,85.f,400.f,2.f}, {200.f,85.f,1100.f,2.f}, \
-									   {616.f,85.f,0.f,3.f}, {480.f,85.f,610.f,3.f} };
+	vector<vector<float>>wallCoverage{ {44.f, 0.f, 600.f, 50.f,-5.f, 1.f}, {534.f, 0.f, 616.f, 50.f,700.f,1.f }, \
+									   {644.f, 0.f, 308.f,50.f,-5.f,2.f}, {309.f, 0.f, 616.f,50.f,400.f,2.f}, {670.f, 0.f, 200.f,50.f,1100.f,2.f}, \
+									   {100.f, 0.f, 1100.f,50.f,-5.f, 3.f} };
 	for (unsigned int i = 0; i < wallCoverage.size(); i++)
 	{
-		Character block(wTexture, wallAnim, "wall", 0, 0, int(wallCoverage[i][0]), int(wallCoverage[i][1]));
-		block.sprite.setPosition(float(wallCoverage[i][2]), \
-								 float(yWin - (85+89)*wallCoverage[i][3] - (15.f*wallCoverage[i][3])));
+		Character block(wTexture, wallAnim, "wall", int(wallCoverage[i][0]), int(wallCoverage[i][1]), int(wallCoverage[i][2]), int(wallCoverage[i][3]));
+		block.sprite.setPosition(float(wallCoverage[i][4]), \
+			float(yWin - (50 + 90) * wallCoverage[i][5] - (50.f * wallCoverage[i][5])));
+		cout << "wall textures: " << block.sprite.getTexture() << endl; //10FFC00 same
 		walls.push_back(block);
 	}
-	
-	Character key(kTexture, keyAnim, "key", 0, 0, 105, 172);
-	key.sprite.setPosition(float(xWin) - 105.f, 0.f);
 
-	Character canonball(cbTexture, "canonball_sprite_sheet.png", "canonball", 0, 0, 40, 40);
-	canonball.sprite.setPosition(0.f, float(yWin - 89 - 85 - 15 - 40));
-	int i = 1;
+	Character key(kTexture, keyAnim, "key", 0, 0, 110, 140);
+	key.sprite.setPosition(float(xWin) - 110.f, 0.f);
 
-	Character canonball2(cbTexture, "canonball_sprite_sheet.png", "canonball", 0, 0, 40, 40);
-	canonball2.sprite.setPosition(float(xWin - 40), float(yWin - 40));
-	int j = 1;
-
-	Character canonball3(cbTexture, "canonball_sprite_sheet.png", "canonball", 0, 0, 40, 40);
-	canonball3.sprite.setPosition(float(xWin - 40), float(yWin - (89 + 85 + 15)*2 - 40));
-	int k = 1;
+	list<Character> enemies;
+	//x position, y position, speed, interval, starting frame
+	vector<vector<float>> enemyStartPosition{ {float(xWin - 40), float(yWin - 40), -2.f, 10.f, 320.f},\
+											  {0.f,				 float(yWin - 40), 1.5, 15.f, 40.f}, \
+											  {float(xWin - 40), float(yWin - 40), -0.75, 20.f, 320.f}, \
+											  {float(xWin + 300 - 40), float(yWin - 90), -2.f, 10.f, 320.f}, \
+											  {-300.f, float(yWin - 90), 1.5, 15.f, 40.f}, \
+											  {float(xWin+500 - 40), float(yWin - 90), -0.55f, 20.f, 320.f} };
+	for (unsigned int i = 0; i < enemyStartPosition.size(); i++)
+	{
+		Character cannonball(cbTexture, enemyAnim, "cannonball", 0, 0, 40, 40);
+		cannonball.sprite.setPosition(float(enemyStartPosition[i][0]), float(enemyStartPosition[i][1] - i%3*(90 + 100)));
+		cannonball.movementSetting(enemyStartPosition[i][2], int(enemyStartPosition[i][3]), int(enemyStartPosition[i][4]));
+		enemies.push_back(cannonball);
+	}
 
 	//Event
 	Event event;
 	//Move
 	float moveUnitMin, moveUnitMax;
-	moveUnitMin = -3.f, moveUnitMax = 3.f;
+	moveUnitMin = -2, moveUnitMax = 2;
+
+	//Load music and play
+	Music music;
+	setup_bgmusic(&music, bgmusicFile);
+	music.play();
 
 	//Game loop
 	while (window.isOpen())
@@ -199,128 +227,84 @@ int main()
 		if (Keyboard::isKeyPressed(Keyboard::Right))
 		{
 			velocity.x = moveUnitMax;
-			posture = 0;
+			posture = 1;
 		}
 		if (Keyboard::isKeyPressed(Keyboard::Left))
 		{
 			velocity.x = moveUnitMin;
-			posture = 1;
-			
+			posture = 2;
 		}
 		if (Keyboard::isKeyPressed(Keyboard::Up))
 		{
 			velocity.y = moveUnitMin;
-			posture = 2;
+			if (posture == 1)
+				posture = 1;
+			else if (posture == 2)
+				posture = 2;
 		}
 		if (Keyboard::isKeyPressed(Keyboard::Down))
 		{
 			velocity.y = moveUnitMax;
-			posture = 3;
+			if (posture == 1)
+				posture = 1;
+			else if (posture == 2)
+				posture = 2;
 		}
-		//Weapon display controls A, D, W and S letter keys
-		if (Keyboard::isKeyPressed(Keyboard::A))
-		{
-			posture = 4;
-		}
-		if (Keyboard::isKeyPressed(Keyboard::D))
-		{
-			posture = 5;
-		}
-		if (Keyboard::isKeyPressed(Keyboard::W))
-		{
-			posture = 6;
-		}
-		if (Keyboard::isKeyPressed(Keyboard::S))
-		{
-			posture = 7;
-		}
-
-		//Update
+		
+		//Update player movement and posture
 		player.sprite.move(velocity.x, velocity.y);
 		player.changePosture(playerPostures[posture][0], playerPostures[posture][1], \
-							 playerPostures[posture][2], playerPostures[posture][3], \
-							 playerPostures[posture][4]);
+									 playerPostures[posture][2], playerPostures[posture][3], \
+									 playerPostures[posture][4]);
+		
 		//Update Score
-		//TODO: decide the score conditions
-		player.score += int(abs(velocity.x + velocity.y));
+		player.score += int(abs(velocity.x) + abs(velocity.y));
 
 		//Boundary collision detection
 		player.checkBoundaryCollision(windowBounds);
+
 		//Player to wall collision detection
 		for (auto wall : walls)
 		{
 			player.checkObjectCollision(&player, &wall, velocity);
 		}
+
 		//Player to key collision detection
 		player.checkObjectCollision(&player, &key, velocity);
 
-		//canonball
-		if (canonball.notCollided)
+		//Enemy
+		//1.cannonball
+		for (auto &enemy : enemies)
 		{
-			canonball.sprite.move(1.5, 0.f);
-
-			if (int(canonball.sprite.getGlobalBounds().left) % 15 == 0)
+			if (enemy.notCollided)
 			{
-				if (i < 9)
+				enemy.sprite.move(enemy.speed, 0.f);
+				if (int(enemy.sprite.getGlobalBounds().left) % enemy.interval == 0)
 				{
-					canonball.changePosture(abs(40 - 40 * i), 0, 40, 40, 1);
-					i++;
+					if (enemy.step < 9)
+					{
+						enemy.changePosture(abs(enemy.startFrame - 40 * enemy.step), 0, 40, 40, 1);
+						enemy.step++;
+					}
 				}
+				if (enemy.step == 9)
+					enemy.step = 1;
 			}
-			if (i == 9)
-				i = 1;
+			player.checkObjectCollision(&player, &enemy, velocity);
 		}
-		player.checkObjectCollision(&player, &canonball, velocity);
 
-		//canonball2
-		if (canonball2.notCollided)
-		{
-			canonball2.sprite.move(-2.f, 0.f);
-
-			if (int(canonball2.sprite.getGlobalBounds().left) % 10 == 0)
-			{
-				if (j < 9)
-				{
-					canonball2.changePosture(abs(320 - 40 * j), 0, 40, 40, 1);
-					j++;
-				}
-			}
-			if (j == 9)
-				j = 1;
-		}
-		player.checkObjectCollision(&player, &canonball2, velocity);
-
-		//canonball3
-		if (canonball3.notCollided)
-		{
-			canonball3.sprite.move(-0.5, 0.f);
-
-			if (int(canonball3.sprite.getGlobalBounds().left) % 20 == 0)
-			{
-				if (k < 9)
-				{
-					canonball3.changePosture(abs(320 - 40 * k), 0, 40, 40, 1);
-					k++;
-				}
-			}
-			if (k == 9)
-				k = 1;
-		}
-		player.checkObjectCollision(&player, &canonball3, velocity);
 		//Update score
-		scoreboard = scoretext + to_string(player.score);
+		scoreboard = lifetext + scoretext + to_string(player.score);
 		Score.setString(scoreboard);
 
 		//Display all
-		window.clear(Color(30,30,40,255));//Night shade(30,30,40)
-		//window.clear(Color(20, 20, 20, 255));//Dark Grey(20,20,20)
+		window.clear(Color(30, 30, 40,255));
 		window.draw(player.sprite);
-		for (auto wall: walls)
+		for(auto wall: walls)
 			window.draw(wall.sprite);
 		window.draw(key.sprite);
-		window.draw(canonball.sprite);
-		window.draw(canonball2.sprite);
-		window.draw(canonball3.sprite);
+		for (auto enemy : enemies)
+			window.draw(enemy.sprite);
 		window.draw(Score);
 		window.display();
 	}
