@@ -19,12 +19,14 @@ Player's mission is to reach the town's Gazebo. Use the arrow keys to move aroun
 | Background music | sf::Music is used to stream music from a .ogg file. Looping is set to True. Pitch has been reset to 1.05f to match the pace of player. Volume is on a lower setting of 20. Credits are at the end of the page. |
 | Added win condition | Player must reach the key location(Gazebo) with score greater than 5000. Then Game Over window overrides game window. User to close game over window to exit Vyuha1. |
 
-## Sprite Description
-I have used Windows 10 Paint 3D to create character sprite sheets and animations for the game.
+## Sprite creation and description
+I've used Windows 10 Paint 3D to create character sprite sheets and animations for the game. The 3D library provides wide range of 3D models. I enjoyed playing with different models, visualizing the look and feel of the game layout.
 
-Player is the main character modelled to mimic movement in all four directions when left/right/up/down arrow key is pressed.
+From a very basic looking wall structure to designing a fictional 18th century town was fun. The player sprite is a Pirate. His attire has been changed to bright red with golden rim to make him standout. In creating the sprite sheets I understood what dimensions work best on the layout and especially for collision detection. If the Player occupies the entire bounding rectangle, without much gaps, then the collisions appear natural.
 
-There are some replicas in the sprite sheet which will act as place holders for additional player animations.
+Below is the description of what each sprite represents:
+
+Player is the main character modelled to mimic movement in all four directions when left/right/up/down arrow key is pressed. There are some replicas in the sprite sheet which will act as place holders for additional player animations.
 
 ![](resources/images/pirate_motion.png)
 
@@ -32,7 +34,7 @@ Key(Gazebo) is a static element placed at the end point of game for the player t
 
 ![](resources/images/gazebo_key.png)
 
-Wall is a static element, that the player has to navigate through to reach the Key.
+Wall(Town structures) is a static element, that the player has to navigate through to reach the Key.
 
 ![](resources/images/wall.png)
 
