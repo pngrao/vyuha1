@@ -170,14 +170,13 @@ int main()
 
 	list<Character>walls;
 	vector<vector<float>>wallCoverage{ {44.f, 0.f, 600.f, 50.f,-5.f, 1.f}, {534.f, 0.f, 616.f, 50.f,700.f,1.f }, \
-									   {644.f, 0.f, 308.f,50.f,-5.f,2.f}, {309.f, 0.f, 616.f,50.f,400.f,2.f}, {670.f, 0.f, 200.f,50.f,1100.f,2.f}, \
-									   {100.f, 0.f, 1100.f,50.f,-5.f, 3.f} };
+	{644.f, 0.f, 308.f,50.f,-5.f,2.f}, {309.f, 0.f, 616.f,50.f,400.f,2.f}, {670.f, 0.f, 200.f,50.f,1100.f,2.f}, \
+	{100.f, 0.f, 1100.f,50.f,-5.f, 3.f} };
 	for (unsigned int i = 0; i < wallCoverage.size(); i++)
 	{
 		Character block(wTexture, wallAnim, "wall", int(wallCoverage[i][0]), int(wallCoverage[i][1]), int(wallCoverage[i][2]), int(wallCoverage[i][3]));
 		block.sprite.setPosition(float(wallCoverage[i][4]), \
 			float(yWin - (50 + 90) * wallCoverage[i][5] - (50.f * wallCoverage[i][5])));
-		cout << "wall textures: " << block.sprite.getTexture() << endl; //10FFC00 same
 		walls.push_back(block);
 	}
 
@@ -187,11 +186,11 @@ int main()
 	list<Character> enemies;
 	//x position, y position, speed, interval, starting frame
 	vector<vector<float>> enemyStartPosition{ {float(xWin - 40), float(yWin - 40), -2.f, 10.f, 320.f},\
-											  {0.f,				 float(yWin - 40), 1.5, 15.f, 40.f}, \
-											  {float(xWin - 40), float(yWin - 40), -0.75, 20.f, 320.f}, \
-											  {float(xWin + 300 - 40), float(yWin - 90), -2.f, 10.f, 320.f}, \
-											  {-300.f, float(yWin - 90), 1.5, 15.f, 40.f}, \
-											  {float(xWin+500 - 40), float(yWin - 90), -0.55f, 20.f, 320.f} };
+	{0.f, float(yWin - 40), 1.5, 15.f, 40.f}, \
+	{float(xWin - 40), float(yWin - 40), -0.75, 20.f, 320.f}, \
+	{float(xWin + 300 - 40), float(yWin - 90), -2.f, 10.f, 320.f}, \
+	{-300.f, float(yWin - 90), 1.5, 15.f, 40.f}, \
+	{float(xWin+500 - 40), float(yWin - 90), -0.55f, 20.f, 320.f} };
 	for (unsigned int i = 0; i < enemyStartPosition.size(); i++)
 	{
 		Character cannonball(cbTexture, enemyAnim, "cannonball", 0, 0, 40, 40);
@@ -254,8 +253,8 @@ int main()
 		//Update player movement and posture
 		player.sprite.move(velocity.x, velocity.y);
 		player.changePosture(playerPostures[posture][0], playerPostures[posture][1], \
-									 playerPostures[posture][2], playerPostures[posture][3], \
-									 playerPostures[posture][4]);
+							 playerPostures[posture][2], playerPostures[posture][3], \
+						     playerPostures[posture][4]);
 		
 		//Update Score
 		player.score += int(abs(velocity.x) + abs(velocity.y));
