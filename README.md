@@ -1,7 +1,7 @@
-# What is Vyuha1?
-Vyuha1 is a 2D game for Windows 10 Operating System. It's built using [C++](https://en.wikipedia.org/wiki/C%2B%2B) and [SFML 2.5.1](https://www.sfml-dev.org/).
+## What is Vyuha1?
+![](resources/images/pirateicon64.png) Vyuha1 is a 2D game for Windows 10 Operating System. It's built using [C++](https://en.wikipedia.org/wiki/C%2B%2B) and [SFML 2.5.1](https://www.sfml-dev.org/).
 
-# How to play?
+## How to play?
 Player's mission is to reach the town's Gazebo. Use the arrow keys to move around the town. But, beware of the patrolling cannonballs. Dodge them to keep your score high enough to clear Vyuha1! See Game window below.
 
 ## Technical Features
@@ -45,11 +45,13 @@ Game icon in title bar and thumbnail:
 ![](resources/images/pirateicon64.png)
 
 ## Game layout
-Newer version:
+Game window:
 ![](output_screenshots/screenshot_may22.png)
 
-Game over:
+Game over window:
 ![](output_screenshots/screenshot_jun07.png)
 
 ## Music credits
 Blind Love Dub by Jeris (c) copyright 2017 Licensed under a Creative Commons Attribution (3.0) license. http://dig.ccmixter.org/files/VJ_Memes/55416 Ft: Kara Square (mindmapthat)
+
+### Created by Pannaga Rao.
