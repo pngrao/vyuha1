@@ -18,7 +18,7 @@
 ## Sprite Creation
 I have used Windows 10 Paint 3D to create character animations for the game.
 
-Player is the main character modelled to mimic movement in all four directions when left/right/up/down arrow key is pressed. Player also displays weapon in all four directions when A/W/S/D key is pressed.
+Player is the main character modelled to mimic movement in all four directions when left/right/up/down arrow key is pressed.
 
 There are some replicas in the sprite sheet which will act as place holders for additional player animations.
 
