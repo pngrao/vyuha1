@@ -7,7 +7,9 @@ using namespace sf;
 
 //Window size set using only modes supporting fullscreeen
 unsigned int xWin = 1280, yWin = 600;
+//Framerate setting
 unsigned int FRLimit = 60;
+//All media files
 string playerAnim = "resources/images/pirate_motion.png";
 string wallAnim = "resources/images/wall.png";
 string keyAnim = "resources/images/gazebo_key.png";
@@ -25,22 +27,23 @@ public:
 	string name;
 	bool notCollided = true;
 	int score = 0;
+
 	//cannonball, code to be moved to enemy class
 	int step=1;
 	float speed = 1.f;
 	int interval = 10;
 	int startFrame = 40;
+
 	Character():left(0), top(0), width(0), height(0), frameCount(1) {}
-	Character(Texture& t, string filename, string n, int x=0, int y=0, int w=0, int h=0, int f=1):left(x), top(y), width(w), height(h), frameCount(f)
+	Character(string filename, string n, int x=0, int y=0, int w=0, int h=0, int f=1):\
+	                                     left(x), top(y), width(w), height(h), frameCount(f)
 	{
-		texture = t;
 		name = n;
 		texture.loadFromFile(filename);
 		texture.setSmooth(true);
 		changePosture(x, y, w, h, f);
 	}
 	
-	//TODO overload changePosture to accept vector<vector<int>>
 	void changePosture(int x, int y, int w, int h, int f)
 	{
 		std::vector<IntRect> animFrames;
@@ -53,6 +56,7 @@ public:
 		sprite.setTexture(texture);
 		sprite.setTextureRect(animFrames[0]);
 	}
+
 	void checkBoundaryCollision(sf::FloatRect bounds)
 	{
 		//Collision detection - Player vs Window boundary line(2D obj vs 1D obj)
@@ -65,8 +69,10 @@ public:
 		position.y = std::min(position.y, bounds.height - height);
 		sprite.setPosition(position);
 	}
+
 	void checkObjectCollision(Character* a, Character* b, Vector2f &v)
 	{
+		//Collision detection - Player vs Enemy/Wall/Key(2D obj vs 2D obj)
 		FloatRect aBounds = a->sprite.getGlobalBounds();
 		FloatRect bBounds = b->sprite.getGlobalBounds();
 		aBounds.left += v.x;
@@ -110,12 +116,13 @@ public:
 				if (b->notCollided)
 				{
 					a->score -= 1000;
-					cout << "Oops!" << endl;
+					cout << "Debug: Oops!" << endl;
 				}
 				b->notCollided = false;
 			}
 		}
 	}
+
 	void movementSetting(float s, int i, int sf)
 	{
 		step = 1;
@@ -123,8 +130,16 @@ public:
 		interval = i;
 		startFrame = sf;
 	}
-	//Add a method to change frames later
 };
+
+void setup_score(Text* Score)
+{
+	Score->setFillColor(Color(200, 90, 90, 255));
+	Score->setOutlineColor(Color::Black);
+	Score->setOutlineThickness(1.f);
+	Score->setLetterSpacing(1.f);
+	Score->setStyle(Text::Italic);
+}
 
 void setup_bgmusic(Music* music, string file)
 {
@@ -147,27 +162,18 @@ int main()
 	icon.loadFromFile(iconImage);
 	window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
 	
-	//Texture & Sprite
-	Texture pTexture, wTexture, kTexture, cbTexture;
-
-	Character player(pTexture, playerAnim, "player", 0, 0, 55, 90);
+	//Create game entities
+	//Player
+	Character player(playerAnim, "player", 0, 0, 55, 90);
 	player.sprite.setPosition(0.f, float(yWin - 90));
 	vector<vector<int>>playerPostures{ {0, 0, 60, 90, 1}, {60, 0, 55, 90, 1}, {225, 0, 55, 90, 1} };
 	int posture = 0;
 
-	//Set Score
-	Font font;
-	font.loadFromFile(fontFile);
-	string scoretext = "  SCORE: ";
-	string lifetext = "  LIFE: 1";
-	string scoreboard = lifetext + scoretext + to_string(player.score);
-	Text Score(scoreboard, font, 20);
-	Score.setFillColor(Color(200,90,90,255));
-	Score.setOutlineColor(Color::Black);
-	Score.setOutlineThickness(1.f);
-	Score.setLetterSpacing(1.f);
-	Score.setStyle(Text::Italic);
+	//Key: Gazebo
+	Character key(keyAnim, "key", 0, 0, 110, 140);
+	key.sprite.setPosition(float(xWin) - 110.f, 0.f);
 
+	//Wall: Build Town structures
 	list<Character>walls;
 	vector<vector<float>>wallCoverage{ \
 	                    {44.f, 0.f, 600.f, 50.f,-5.f, 1.f}, {534.f, 0.f, 616.f, 50.f,700.f,1.f }, \
@@ -175,17 +181,16 @@ int main()
 	                    {100.f, 0.f, 1100.f,50.f,-5.f, 3.f} };
 	for (unsigned int i = 0; i < wallCoverage.size(); i++)
 	{
-		Character block(wTexture, wallAnim, "wall", int(wallCoverage[i][0]), int(wallCoverage[i][1]), int(wallCoverage[i][2]), int(wallCoverage[i][3]));
+		Character block(wallAnim, "wall", int(wallCoverage[i][0]), int(wallCoverage[i][1]),\
+		                int(wallCoverage[i][2]), int(wallCoverage[i][3]));
 		block.sprite.setPosition(float(wallCoverage[i][4]), \
-			float(yWin - (50 + 90) * wallCoverage[i][5] - (50.f * wallCoverage[i][5])));
+		                         float(yWin - (50 + 90) * wallCoverage[i][5] - (50.f * wallCoverage[i][5])));
 		walls.push_back(block);
 	}
 
-	Character key(kTexture, keyAnim, "key", 0, 0, 110, 140);
-	key.sprite.setPosition(float(xWin) - 110.f, 0.f);
-
+	//Enemies : Cannonball
 	list<Character> enemies;
-	//x position, y position, speed, interval, starting frame
+	//Initializer: x position, y position, speed, interval, starting frame
 	vector<vector<float>> enemyStartPosition{ {float(xWin - 40), float(yWin - 40), -2.f, 10.f, 320.f},\
 	                                          {0.f, float(yWin - 40), 1.5, 15.f, 40.f}, \
 	                                          {float(xWin - 40), float(yWin - 40), -0.75, 20.f, 320.f}, \
@@ -194,7 +199,7 @@ int main()
 	                                          {float(xWin+500 - 40), float(yWin - 90), -0.55f, 20.f, 320.f} };
 	for (unsigned int i = 0; i < enemyStartPosition.size(); i++)
 	{
-		Character cannonball(cbTexture, enemyAnim, "cannonball", 0, 0, 40, 40);
+		Character cannonball(enemyAnim, "cannonball", 0, 0, 40, 40);
 		cannonball.sprite.setPosition(float(enemyStartPosition[i][0]), float(enemyStartPosition[i][1] - i%3*(90 + 100)));
 		cannonball.movementSetting(enemyStartPosition[i][2], int(enemyStartPosition[i][3]), int(enemyStartPosition[i][4]));
 		enemies.push_back(cannonball);
@@ -202,11 +207,21 @@ int main()
 
 	//Event
 	Event event;
+
 	//Move
 	float moveUnitMin, moveUnitMax;
 	moveUnitMin = -2, moveUnitMax = 2;
 
-	//Load music and play
+	//Set Score
+	Font font;
+	font.loadFromFile(fontFile);
+	string scoretext = "  SCORE: ";
+	string lifetext = "  LIFE: 1";
+	string scoreboard = lifetext + scoretext + to_string(player.score);
+	Text Score(scoreboard, font, 20);
+	setup_score(&Score);
+
+	//Stream music
 	Music music;
 	setup_bgmusic(&music, bgmusicFile);
 	music.play();
@@ -272,8 +287,7 @@ int main()
 		//Player to key collision detection
 		player.checkObjectCollision(&player, &key, velocity);
 
-		//Enemy
-		//1.cannonball
+		//Enemy cannonball movement and collision detection
 		for (auto &enemy : enemies)
 		{
 			if (enemy.notCollided)
