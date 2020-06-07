@@ -15,8 +15,10 @@ string wallAnim = "resources/images/wall.png";
 string keyAnim = "resources/images/gazebo_key.png";
 string iconImage = "resources/images/pirateicon64.png";
 string enemyAnim = "resources/images/cannonball.png";
+string explodeAnim = "resources/images/explosion.png";
 string fontFile = "resources/fonts/clarenbd.ttf";
 string bgmusicFile = "resources/music/bgmusic.ogg";
+string golaughFile = "resources/music/gameover_laugh.ogg";
 
 class Character {
 public:
@@ -28,7 +30,7 @@ public:
 	bool notCollided = true;
 	int score = 0;
 
-	//cannonball, code to be moved to enemy class
+	//enemy animation
 	int step=1;
 	float speed = 1.f;
 	int interval = 10;
@@ -115,8 +117,17 @@ public:
 			{
 				if (b->notCollided)
 				{
-					a->score -= 1000;
-					cout << "Debug: Oops!" << endl;
+					a->score -= 2000;
+					cout << "Debug: Ouch!" << endl;
+				}
+				b->notCollided = false;
+			}
+			if (b->name == "key")
+			{
+				if (b->notCollided)
+				{
+					a->score += 2000;
+					cout << "Debug: Hurray!" << endl;
 				}
 				b->notCollided = false;
 			}
@@ -132,16 +143,16 @@ public:
 	}
 };
 
-void setup_score(Text* Score)
+void text_setup(Text* text, Color fill, Color outline)
 {
-	Score->setFillColor(Color(200, 90, 90, 255));
-	Score->setOutlineColor(Color::Black);
-	Score->setOutlineThickness(1.f);
-	Score->setLetterSpacing(1.f);
-	Score->setStyle(Text::Italic);
+	text->setFillColor(fill);
+	text->setOutlineColor(outline);
+	text->setOutlineThickness(1.f);
+	text->setLetterSpacing(1.f);
+    text->setStyle(Text::Italic);
 }
 
-void setup_bgmusic(Music* music, string file)
+void bgmusic_setup(Music* music, string file)
 {
 	music->openFromFile(file);
 	music->setLoop(true);
@@ -193,10 +204,10 @@ int main()
 	//Initializer: x position, y position, speed, interval, starting frame
 	vector<vector<float>> enemyStartPosition{ {float(xWin - 40), float(yWin - 40), -2.f, 10.f, 320.f},\
 	                                          {0.f, float(yWin - 40), 1.5, 15.f, 40.f}, \
-	                                          {float(xWin - 40), float(yWin - 40), -0.75, 20.f, 320.f}, \
+	                                          {float(xWin - 40), float(yWin - 40), -2.f, 20.f, 320.f}, \
 	                                          {float(xWin + 300 - 40), float(yWin - 90), -2.f, 10.f, 320.f}, \
 	                                          {-300.f, float(yWin - 90), 1.5, 15.f, 40.f}, \
-	                                          {float(xWin+500 - 40), float(yWin - 90), -0.55f, 20.f, 320.f} };
+	                                          {float(xWin+300 - 40), float(yWin - 90), -2.f, 20.f, 320.f} };
 	for (unsigned int i = 0; i < enemyStartPosition.size(); i++)
 	{
 		Character cannonball(enemyAnim, "cannonball", 0, 0, 40, 40);
@@ -219,11 +230,11 @@ int main()
 	string lifetext = "  LIFE: 1";
 	string scoreboard = lifetext + scoretext + to_string(player.score);
 	Text Score(scoreboard, font, 20);
-	setup_score(&Score);
+	text_setup(&Score, Color(200, 90, 90, 255), Color::Black);
 
 	//Stream music
 	Music music;
-	setup_bgmusic(&music, bgmusicFile);
+	bgmusic_setup(&music, bgmusicFile);
 	music.play();
 
 	//Game loop
@@ -233,7 +244,7 @@ int main()
 		{
 			if (event.type == Event::Closed)
 			{
-				cout << "Score: " << player.score;
+				cout << "Debug: Score: " << player.score;
 				window.close();
 			}
 		}
@@ -288,7 +299,7 @@ int main()
 		player.checkObjectCollision(&player, &key, velocity);
 
 		//Enemy cannonball movement and collision detection
-		for (auto &enemy : enemies)
+		for (auto& enemy : enemies)
 		{
 			if (enemy.notCollided)
 			{
@@ -307,9 +318,62 @@ int main()
 			player.checkObjectCollision(&player, &enemy, velocity);
 		}
 
+		int outofbound = 0;
+		for (auto& enemy : enemies)
+		{
+			float xval = enemy.sprite.getPosition().x;
+			if (xval < 0 || xval > xWin || !enemy.notCollided)
+			{
+				outofbound++;
+			}
+		}
+		if (outofbound==6)
+		{
+			enemies.clear();
+			for (unsigned int i = 0; i < enemyStartPosition.size(); i++)
+			{
+				Character cannonball(enemyAnim, "cannonball", 0, 0, 40, 40);
+				cannonball.sprite.setPosition(float(enemyStartPosition[i][0]), float(enemyStartPosition[i][1] - i % 3 * (90 + 100)));
+				cannonball.movementSetting(enemyStartPosition[i][2], int(enemyStartPosition[i][3]), int(enemyStartPosition[i][4]));
+				enemies.push_back(cannonball);
+			}
+		}
+
 		//Update score
 		scoreboard = lifetext + scoretext + to_string(player.score);
 		Score.setString(scoreboard);
+
+		//Win condition
+		player.checkObjectCollision(&player, &key, velocity);
+		if(player.score > 5000 && !key.notCollided && \
+		   player.sprite.getGlobalBounds().left < xWin-key.sprite.getGlobalBounds().width && \
+		   player.sprite.getGlobalBounds().top < key.sprite.getGlobalBounds().height)
+		{ 
+			music.stop();
+			window.draw(Score);
+			Music laugh;
+			bgmusic_setup(&laugh, golaughFile);
+			laugh.play();
+			RenderWindow gameover(VideoMode(xWin/5, yWin/5), "Game Over!", Style::Close);
+			gameover.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
+			while (gameover.isOpen())
+			{
+				while (gameover.pollEvent(event))
+				{
+					if (event.type == Event::Closed)
+					{
+						gameover.close();
+						window.close();
+					}
+				}
+				Text Message("You won!", font, 25);
+				Message.setPosition(70.f, gameover.getSize().y/2.f-25.f);
+				text_setup(&Message, Color::Black, Color::White);
+				gameover.clear(Color(183, 50, 57, 0));
+				gameover.draw(Message);
+				gameover.display();
+			}
+		}
 
 		//Display all
 		window.clear(Color(30, 30, 40,255));
